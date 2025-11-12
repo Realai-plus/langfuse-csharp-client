@@ -1,6 +1,6 @@
 # Langfuse C# Client
 
-Типизированный C# SDK для работы с Langfuse API, сгенерированный из OpenAPI спецификации с помощью OpenAPI Generator.
+C# SDK для работы с Langfuse API, сгенерированный из OpenAPI спецификации с помощью OpenAPI Generator.
 
 ## Структура
 
@@ -12,15 +12,12 @@ langfuse-csharp-client/
 ├── src/Langfuse.Client/          # Сгенерированная библиотека (gitignored)
 ├── docs/                          # Сгенерированная документация (gitignored)
 ├── api/                           # Копия OpenAPI spec (gitignored)
-├── SimpleExample/                # Пример с HTTP запросами
 └── Example/                      # Пример использования
 ```
 
 ## Быстрый старт
 
-### Вариант 1: Типизированный клиент (рекомендуется)
-
-#### 1. Настроить credentials
+### 1. Настроить credentials
 
 Отредактируйте `Example/Example/appsettings.json`:
 
@@ -34,30 +31,22 @@ langfuse-csharp-client/
 }
 ```
 
-#### 2. Запустить пример
+### 2. Запустить пример
 
 ```bash
 cd Example/Example
 dotnet run
 ```
 
-#### 3. Возможности типизированного клиента
+### 3. Возможности
 
 Пример демонстрирует:
-- ✅ **PromptsApi** - получение промптов с полной типизацией
+- ✅ **PromptsApi** - получение промптов
 - ✅ **MediaApi** - загрузка изображений (BloodGPT logo) с дедупликацией по SHA256
 - ✅ **IngestionApi** - создание traces, generations и scores
+- ✅ **Nested generations** - создание parent-child иерархии (orchestrator → tools)
 - ✅ **Prompt linking** - связывание generation с промптами
 - ✅ **Media references** - прикрепление изображений к traces
-- ✅ **IntelliSense** - полная поддержка автодополнения
-- ✅ **Type safety** - ошибки на этапе компиляции
-
-### Вариант 2: HTTP клиент (legacy)
-
-```bash
-cd SimpleExample
-dotnet run
-```
 
 ## Генерация SDK
 
@@ -96,7 +85,7 @@ var score = new LfScoreBody(id: "...", traceId: "...", name: "...", value: ...);
 
 Это избегает конфликт namespace: класс `Model` внутри `Langfuse.Client.Model`
 
-## Использование типизированного клиента
+## Использование
 
 ### Инициализация
 
@@ -285,17 +274,6 @@ Console.WriteLine($"Successes: {response.Successes.Count}, Errors: {response.Err
 - `@@@langfuseMedia:image/png|||C9E-jA9753sY4imf5GfSJc@@@`
 - `@@@langfuseMedia:image/jpeg|||AbC123xyz@@@`
 - `@@@langfuseMedia:video/mp4|||XyZ789abc@@@`
-
-## Преимущества типизированного клиента
-
-| Возможность | HTTP клиент | Типизированный клиент |
-|-------------|-------------|----------------------|
-| Типизация | ❌ dynamic/anonymous | ✅ Полная типизация |
-| IntelliSense | ❌ Нет | ✅ Полная поддержка |
-| Compile-time проверки | ❌ Runtime ошибки | ✅ Compile-time ошибки |
-| Рефакторинг | ❌ Сложно | ✅ Безопасный |
-| Документация | ❌ В коде | ✅ XML комментарии |
-| API Discovery | ❌ Нужно искать вручную | ✅ Автодополнение |
 
 ## Ссылки
 
