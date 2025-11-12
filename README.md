@@ -262,6 +262,71 @@ var response = await ingestionApi.IngestionBatchAsync(batchRequest);
 Console.WriteLine($"Successes: {response.Successes.Count}, Errors: {response.Errors.Count}");
 ```
 
+### Nested generations (parent-child)
+
+```csharp
+// Parent generation - orchestrator
+var parentGenerationId = Guid.NewGuid().ToString();
+var parentGenerationBody = new LfCreateGenerationBody(
+    id: parentGenerationId,
+    traceId: traceId,
+    name: "orchestrator-llm"
+)
+{
+    StartTime = timestamp,
+    EndTime = timestamp.AddMilliseconds(3000),
+    Model = "gpt-4",
+    Input = new[] { new { role = "user", content = "Analyze results" } },
+    Output = new {
+        content = "Need to check parameters",
+        tool_calls = new[] { "check_parameters", "generate_recommendations" }
+    }
+};
+
+var parentEvent = new LfIngestionEventOneOf4(
+    body: parentGenerationBody,
+    id: Guid.NewGuid().ToString(),
+    timestamp: timestamp.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'"),
+    metadata: null,
+    type: LfIngestionEventOneOf4.TypeEnum.GenerationCreate
+);
+
+// Child generation 1
+var child1GenerationBody = new LfCreateGenerationBody(
+    id: Guid.NewGuid().ToString(),
+    traceId: traceId,
+    name: "check-parameters-llm"
+)
+{
+    ParentObservationId = parentGenerationId,  // Link to parent
+    StartTime = timestamp.AddMilliseconds(100),
+    EndTime = timestamp.AddMilliseconds(1500),
+    Model = "gpt-3.5-turbo",
+    Input = new[] { new { role = "user", content = "Check parameters" } },
+    Output = new { status = "normal" }
+};
+
+var child1Event = new LfIngestionEventOneOf4(
+    body: child1GenerationBody,
+    id: Guid.NewGuid().ToString(),
+    timestamp: timestamp.AddMilliseconds(100).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'"),
+    metadata: null,
+    type: LfIngestionEventOneOf4.TypeEnum.GenerationCreate
+);
+
+// Отправить batch с parent и child
+var batchRequest = new LfIngestionBatchRequest(
+    batch: new List<LfIngestionEvent>
+    {
+        new LfIngestionEvent(parentEvent),
+        new LfIngestionEvent(child1Event)
+    },
+    metadata: null
+);
+
+await ingestionApi.IngestionBatchAsync(batchRequest);
+```
+
 ### Media reference format
 
 Формат ссылки на media в trace/observation input/output:
