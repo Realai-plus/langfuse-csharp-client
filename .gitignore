@@ -377,10 +377,18 @@ Langfuse.Client/
 Langfuse.Client.sln
 appveyor.yml
 
-# Old generated directories
+# Old generated directories and other examples
 generated/
+CommunityLibraryExample/
+EnhancedSdkExample/
+TypedExample/
+SimpleExample/
 
-# Config files
+# Config files and old scripts
 config/
 openapitools.json
 NSwagConfig.nswag
+create-simple-client.sh
+generate-nswag-client.sh
+git_push.sh
+examples/

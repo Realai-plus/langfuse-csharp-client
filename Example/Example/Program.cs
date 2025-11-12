@@ -294,13 +294,146 @@ namespace Example
 
                 Console.WriteLine($"✓ Created score event");
 
+                // ============================================
+                // CREATE NESTED GENERATIONS (Parent-Child)
+                // ============================================
+                Console.WriteLine("\n🔗 Creating nested generations (parent-child relationship)...");
+
+                // Parent generation - main orchestrator
+                var parentGenerationId = Guid.NewGuid().ToString();
+                var parentGenerationBody = new LfCreateGenerationBody(
+                    id: parentGenerationId,
+                    traceId: traceId,
+                    name: "orchestrator-llm"
+                )
+                {
+                    StartTime = timestamp.AddMilliseconds(2100),
+                    EndTime = timestamp.AddMilliseconds(5000),
+                    Model = "gpt-4",
+                    VarEnvironment = "production",
+                    Input = new object[]
+                    {
+                        new { role = "user", content = "Analyze blood test results and provide recommendations" }
+                    },
+                    Output = new {
+                        role = "assistant",
+                        content = "I need to check parameters and generate recommendations",
+                        tool_calls = new[] { "check_parameters", "generate_recommendations" }
+                    },
+                    Usage = new LfIngestionUsage(new LfUsage
+                    {
+                        Input = 50,
+                        Output = 30,
+                        Total = 80
+                    }),
+                    Metadata = new { type = "orchestrator", has_children = true }
+                };
+
+                var parentGenerationEvent = new LfIngestionEventOneOf4(
+                    body: parentGenerationBody,
+                    id: Guid.NewGuid().ToString(),
+                    timestamp: timestamp.AddMilliseconds(2100).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'"),
+                    metadata: null,
+                    type: LfIngestionEventOneOf4.TypeEnum.GenerationCreate
+                );
+
+                Console.WriteLine($"✓ Created parent generation: orchestrator-llm (id: {parentGenerationId})");
+
+                // Child generation 1 - parameter checker
+                var child1GenerationId = Guid.NewGuid().ToString();
+                var child1GenerationBody = new LfCreateGenerationBody(
+                    id: child1GenerationId,
+                    traceId: traceId,
+                    name: "check-parameters-llm"
+                )
+                {
+                    ParentObservationId = parentGenerationId,
+                    StartTime = timestamp.AddMilliseconds(2200),
+                    EndTime = timestamp.AddMilliseconds(3500),
+                    Model = "gpt-3.5-turbo",
+                    VarEnvironment = "production",
+                    Input = new object[]
+                    {
+                        new { role = "system", content = "Check blood parameters against normal ranges" },
+                        new { role = "user", content = "Hemoglobin: 140 g/L, Glucose: 5.2 mmol/L" }
+                    },
+                    Output = new {
+                        role = "assistant",
+                        content = "Parameters are within normal range",
+                        parameters_checked = 2,
+                        status = "normal"
+                    },
+                    Usage = new LfIngestionUsage(new LfUsage
+                    {
+                        Input = 35,
+                        Output = 15,
+                        Total = 50
+                    }),
+                    Metadata = new { type = "tool_call", parent_id = parentGenerationId }
+                };
+
+                var child1GenerationEvent = new LfIngestionEventOneOf4(
+                    body: child1GenerationBody,
+                    id: Guid.NewGuid().ToString(),
+                    timestamp: timestamp.AddMilliseconds(2200).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'"),
+                    metadata: null,
+                    type: LfIngestionEventOneOf4.TypeEnum.GenerationCreate
+                );
+
+                Console.WriteLine($"✓ Created child generation 1: check-parameters-llm (parent: {parentGenerationId})");
+
+                // Child generation 2 - recommendation generator
+                var child2GenerationId = Guid.NewGuid().ToString();
+                var child2GenerationBody = new LfCreateGenerationBody(
+                    id: child2GenerationId,
+                    traceId: traceId,
+                    name: "generate-recommendations-llm"
+                )
+                {
+                    ParentObservationId = parentGenerationId,
+                    StartTime = timestamp.AddMilliseconds(3600),
+                    EndTime = timestamp.AddMilliseconds(4900),
+                    Model = "gpt-4",
+                    VarEnvironment = "production",
+                    Input = new object[]
+                    {
+                        new { role = "system", content = "Generate health recommendations based on blood test results" },
+                        new { role = "user", content = "Status: normal, Parameters: Hemoglobin, Glucose" }
+                    },
+                    Output = new {
+                        role = "assistant",
+                        content = "Maintain current lifestyle. Consider regular exercise and balanced diet.",
+                        recommendations = new[] { "Regular exercise", "Balanced diet", "Annual checkup" }
+                    },
+                    Usage = new LfIngestionUsage(new LfUsage
+                    {
+                        Input = 40,
+                        Output = 25,
+                        Total = 65
+                    }),
+                    Metadata = new { type = "tool_call", parent_id = parentGenerationId }
+                };
+
+                var child2GenerationEvent = new LfIngestionEventOneOf4(
+                    body: child2GenerationBody,
+                    id: Guid.NewGuid().ToString(),
+                    timestamp: timestamp.AddMilliseconds(3600).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'"),
+                    metadata: null,
+                    type: LfIngestionEventOneOf4.TypeEnum.GenerationCreate
+                );
+
+                Console.WriteLine($"✓ Created child generation 2: generate-recommendations-llm (parent: {parentGenerationId})");
+
                 // Create batch request with all events
                 var batchRequest = new LfIngestionBatchRequest(
                     batch: new List<LfIngestionEvent>
                     {
                         new LfIngestionEvent(traceEvent),
                         new LfIngestionEvent(generationEvent),
-                        new LfIngestionEvent(scoreEvent)
+                        new LfIngestionEvent(scoreEvent),
+                        new LfIngestionEvent(parentGenerationEvent),
+                        new LfIngestionEvent(child1GenerationEvent),
+                        new LfIngestionEvent(child2GenerationEvent)
                     },
                     metadata: null
                 );
@@ -329,13 +462,17 @@ namespace Example
                 Console.WriteLine("\n╔════════════════════════════════════════════════╗");
                 Console.WriteLine("║           ✅ COMPLETE SUCCESS!                ║");
                 Console.WriteLine("╚════════════════════════════════════════════════╝");
-                Console.WriteLine("\n📊 What we did (same as SimpleExample but typed):");
+                Console.WriteLine("\n📊 What we did:");
                 Console.WriteLine("  ✅ Fetched prompts using PromptsApi");
-                Console.WriteLine("  ✅ Uploaded image using MediaApi");
-                Console.WriteLine("  ✅ Created typed trace event (with image attached)");
-                Console.WriteLine("  ✅ Created typed generation event (linked to prompt)");
-                Console.WriteLine("  ✅ Created typed score event");
-                Console.WriteLine("  ✅ Sent batch using IngestionApi");
+                Console.WriteLine("  ✅ Uploaded BloodGPT logo using MediaApi (with deduplication)");
+                Console.WriteLine("  ✅ Created trace event (with image attached)");
+                Console.WriteLine("  ✅ Created generation event (linked to prompt)");
+                Console.WriteLine("  ✅ Created score event");
+                Console.WriteLine("  ✅ Created nested generations (parent-child hierarchy):");
+                Console.WriteLine("      • Parent: orchestrator-llm (gpt-4)");
+                Console.WriteLine("      • Child 1: check-parameters-llm (gpt-3.5-turbo)");
+                Console.WriteLine("      • Child 2: generate-recommendations-llm (gpt-4)");
+                Console.WriteLine("  ✅ Sent batch with 6 events using IngestionApi");
 
                 Console.WriteLine("\n🔗 Check your dashboard:");
                 Console.WriteLine($"   https://hipaa.cloud.langfuse.com/traces");
