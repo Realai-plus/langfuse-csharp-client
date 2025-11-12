@@ -1,0 +1,8 @@
+# Не перезаписывать наши файлы
+README.md
+langfuse-csharp-client.sln
+SimpleExample/
+Example/
+scripts/
+config/
+examples/
