@@ -16,10 +16,19 @@ namespace Example
     {
         static async Task Main(string[] args)
         {
+            // Check if user wants to run simple example
+            if (args.Length > 0 && args[0] == "simple")
+            {
+                await SimpleLoggingExample.Run();
+                return;
+            }
+
             Console.WriteLine("╔═══════════════════════════════════════════════╗");
-            Console.WriteLine("║  Langfuse GENERATED Client Example           ║");
-            Console.WriteLine("║  Using OpenAPI Generator csharp               ║");
+            Console.WriteLine("║  Langfuse C# Client Example                  ║");
+            Console.WriteLine("║  Using OpenAPI Generator                      ║");
             Console.WriteLine("╚═══════════════════════════════════════════════╝\n");
+            Console.WriteLine("💡 Run with 'simple' argument for simple logging example:");
+            Console.WriteLine("   dotnet run simple\n");
 
             // Load configuration
             var configuration = new ConfigurationBuilder()
