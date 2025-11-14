@@ -1,0 +1,14 @@
+# Langfuse.Client.Model.LfIngestionEventOneOf
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**Id** | **string** | UUID v4 that identifies the event | 
+**Timestamp** | **string** | Datetime (ISO 8601) of event creation in client. Should be as close to actual event creation in client as possible, this timestamp will be used for ordering of events in future release. Resolution: milliseconds (required), microseconds (optimal). | 
+**Metadata** | **Object** | Optional. Metadata field used by the Langfuse SDKs for debugging. | [optional] 
+**Body** | [**LfTraceBody**](LfTraceBody.md) |  | 
+**Type** | **string** |  | 
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
